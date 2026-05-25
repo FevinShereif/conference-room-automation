@@ -1,6 +1,6 @@
-from flask import Flask
+from flask import Flask, render_template
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from msal import ConfidentialClientApplication
 import requests
@@ -11,6 +11,57 @@ from config import *
 app = Flask(__name__)
 
 AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
+
+
+def send_pin_email(
+    access_token,
+    recipient,
+    subject,
+    meeting_start,
+    meeting_end,
+    pin_code
+):
+
+    email_url = f"https://graph.microsoft.com/v1.0/users/{ROOM_EMAIL}/sendMail"
+
+    email_body = {
+        "message": {
+            "subject": "Conference Room Access PIN",
+            "body": {
+                "contentType": "Text",
+                "content": f"""
+Conference Room Booking Confirmed
+
+Meeting:
+{subject}
+
+Time:
+{meeting_start} - {meeting_end}
+
+Your Access PIN:
+{pin_code}
+
+Please use this PIN on the conference room display to unlock the room.
+"""
+            },
+            "toRecipients": [
+                {
+                    "emailAddress": {
+                        "address": recipient
+                    }
+                }
+            ]
+        }
+    }
+
+    requests.post(
+        email_url,
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        },
+        json=email_body
+    )
 
 
 def sync_meetings():
@@ -45,30 +96,45 @@ def sync_meetings():
 
         event_id = event.get("id")
 
-        subject = event.get("subject", "No Subject")
+        subject = event.get(
+            "subject",
+            "No Subject"
+        )
 
         organizer = event.get(
             "organizer", {}
         ).get(
             "emailAddress", {}
         ).get(
-            "name", "Unknown"
+            "name",
+            "Unknown"
+        )
+
+        organizer_email = event.get(
+            "organizer", {}
+        ).get(
+            "emailAddress", {}
+        ).get(
+            "address",
+            ""
         )
 
         start_time = event.get(
             "start", {}
         ).get(
-            "dateTime", ""
+            "dateTime",
+            ""
         )
 
         end_time = event.get(
             "end", {}
         ).get(
-            "dateTime", ""
+            "dateTime",
+            ""
         )
 
         cursor.execute(
-            "SELECT * FROM meetings WHERE event_id=?",
+            "SELECT pin_code FROM meetings WHERE event_id=?",
             (event_id,)
         )
 
@@ -80,25 +146,34 @@ def sync_meetings():
                 random.randint(100000, 999999)
             )
 
+            send_pin_email(
+                access_token,
+                organizer_email,
+                subject,
+                start_time,
+                end_time,
+                pin_code
+            )
+
             cursor.execute("""
             INSERT INTO meetings (
                 event_id,
                 subject,
                 organizer,
+                organizer_email,
                 start_time,
                 end_time,
-                pin_code,
-                status
+                pin_code
             )
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (
                 event_id,
                 subject,
                 organizer,
+                organizer_email,
                 start_time,
                 end_time,
-                pin_code,
-                "RESERVED"
+                pin_code
             ))
 
     conn.commit()
@@ -128,6 +203,7 @@ def home():
     SELECT
         subject,
         organizer,
+        organizer_email,
         start_time,
         end_time,
         pin_code
@@ -139,7 +215,7 @@ def home():
 
     conn.close()
 
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
 
     current_meeting = None
     next_meeting = None
@@ -148,17 +224,17 @@ def home():
 
         subject = meeting[0]
         organizer = meeting[1]
-        start_time = meeting[2]
-        end_time = meeting[3]
-        pin_code = meeting[4]
+        organizer_email = meeting[2]
+        start_time = meeting[3]
+        end_time = meeting[4]
 
         start_dt = datetime.fromisoformat(
-    start_time.replace("Z", "+00:00")
-)
+            start_time.replace("Z", "")
+        )
 
-end_dt = datetime.fromisoformat(
-    end_time.replace("Z", "+00:00")
-)
+        end_dt = datetime.fromisoformat(
+            end_time.replace("Z", "")
+        )
 
         if start_dt <= now <= end_dt:
 
@@ -166,8 +242,7 @@ end_dt = datetime.fromisoformat(
                 "subject": subject,
                 "organizer": organizer,
                 "start": start_dt.strftime("%I:%M %p"),
-                "end": end_dt.strftime("%I:%M %p"),
-                "pin": pin_code
+                "end": end_dt.strftime("%I:%M %p")
             }
 
         elif start_dt > now and next_meeting is None:
@@ -181,228 +256,20 @@ end_dt = datetime.fromisoformat(
         "%d-%b-%Y %I:%M %p"
     )
 
-    if current_meeting:
-
-        next_html = ""
-
-        if next_meeting:
-
-            next_html = f"""
-            <div class="card">
-                <h2>Next Meeting</h2>
-
-                <p>{next_meeting['subject']}</p>
-
-                <p>Starts At:
-                {next_meeting['start']}</p>
-            </div>
-            """
-
-        return f"""
-        <html>
-
-        <head>
-
-            <title>
-                Smart Conference Room
-            </title>
-
-            <meta http-equiv="refresh" content="30">
-
-            <style>
-
-                body {{
-
-                    background:
-                    linear-gradient(
-                        135deg,
-                        #0f172a,
-                        #111827,
-                        #1e293b
-                    );
-
-                    color:white;
-
-                    font-family:Arial;
-
-                    text-align:center;
-
-                    padding:30px;
-                }}
-
-                .card {{
-
-                    background:rgba(
-                        255,
-                        255,
-                        255,
-                        0.08
-                    );
-
-                    padding:25px;
-
-                    margin:20px auto;
-
-                    border-radius:20px;
-
-                    width:500px;
-
-                    box-shadow:0 0 20px rgba(
-                        0,
-                        0,
-                        0,
-                        0.4
-                    );
-                }}
-
-                .pin {{
-
-                    font-size:60px;
-
-                    color:#facc15;
-
-                    font-weight:bold;
-                }}
-
-            </style>
-
-        </head>
-
-        <body>
-
-            <h1>
-                Conference Room 1
-            </h1>
-
-            <div class="card">
-
-                <h2 style="color:#ef4444;">
-                    🔴 RESERVED
-                </h2>
-
-                <h2>
-                    {current_meeting['subject']}
-                </h2>
-
-                <p>
-                    Organizer:
-                    {current_meeting['organizer']}
-                </p>
-
-                <p>
-                    {current_meeting['start']}
-                    -
-                    {current_meeting['end']}
-                </p>
-
-                <div class="pin">
-                    {current_meeting['pin']}
-                </div>
-
-            </div>
-
-            {next_html}
-
-            <div class="card">
-
-                <h3>
-                    Current Time
-                </h3>
-
-                <p>
-                    {current_time}
-                </p>
-
-            </div>
-
-        </body>
-
-        </html>
-        """
-
-    else:
-
-        return f"""
-        <html>
-
-        <head>
-
-            <meta http-equiv="refresh" content="30">
-
-            <style>
-
-                body {{
-
-                    background:
-                    linear-gradient(
-                        135deg,
-                        #052e16,
-                        #14532d,
-                        #166534
-                    );
-
-                    color:white;
-
-                    font-family:Arial;
-
-                    text-align:center;
-
-                    padding-top:100px;
-                }}
-
-                .card {{
-
-                    background:rgba(
-                        255,
-                        255,
-                        255,
-                        0.08
-                    );
-
-                    padding:25px;
-
-                    margin:auto;
-
-                    border-radius:20px;
-
-                    width:500px;
-                }}
-
-            </style>
-
-        </head>
-
-        <body>
-
-            <div class="card">
-
-                <h1>
-                    Conference Room 1
-                </h1>
-
-                <h1 style="color:#4ade80;">
-                    🟢 AVAILABLE
-                </h1>
-
-                <h3>
-                    Available Now
-                </h3>
-
-                <p>
-                    Current Time:
-                    {current_time}
-                </p>
-
-            </div>
-
-        </body>
-
-        </html>
-        """
+    return render_template(
+        "display.html",
+        current_meeting=current_meeting,
+        next_meeting=next_meeting,
+        current_time=current_time
+    )
 
 
 if __name__ == "__main__":
 
     sync_meetings()
 
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )

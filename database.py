@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS meetings (
 
     organizer TEXT,
 
+    organizer_email TEXT,
+
     start_time TEXT,
 
     end_time TEXT,

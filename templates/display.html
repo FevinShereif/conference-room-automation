@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>Conference Room</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+<body>
+
+    <div class="top-bar">
+
+        <div class="room-title-small">
+            Enterprise Room Panel
+        </div>
+
+        <div class="sync-status">
+
+            <span class="sync-dot"></span>
+
+            LIVE
+
+        </div>
+
+    </div>
+
+    <h1 class="title">
+        Conference Room 1
+    </h1>
+
+    {% if current_meeting %}
+
+    <div class="card reserved">
+
+        <h2>
+            🔴 RESERVED
+        </h2>
+
+        <h1>
+            {{ current_meeting.subject }}
+        </h1>
+
+        <p>
+            Organizer:
+            {{ current_meeting.organizer }}
+        </p>
+
+        <p id="meeting-time">
+
+            {{ current_meeting.start }}
+            -
+            {{ current_meeting.end }}
+
+        </p>
+
+        <div class="countdown">
+
+            Meeting In Progress
+
+        </div>
+
+        <div class="progress-container">
+
+            <div class="progress-bar"></div>
+
+        </div>
+
+ <div class="pin-box">
+
+    <div class="pin-title">
+
+        Enter Meeting PIN
+
+    </div>
+
+    <input
+        type="password"
+        id="pin-input"
+        readonly
+        placeholder="••••••"
+    >
+
+    <div class="keypad">
+
+        <button onclick="addPin('1')">1</button>
+        <button onclick="addPin('2')">2</button>
+        <button onclick="addPin('3')">3</button>
+
+        <button onclick="addPin('4')">4</button>
+        <button onclick="addPin('5')">5</button>
+        <button onclick="addPin('6')">6</button>
+
+        <button onclick="addPin('7')">7</button>
+        <button onclick="addPin('8')">8</button>
+        <button onclick="addPin('9')">9</button>
+
+        <button onclick="clearPin()">C</button>
+
+        <button onclick="addPin('0')">0</button>
+
+        <button onclick="verifyPin()">✓</button>
+
+    </div>
+
+    <div id="pin-message"></div>
+
+</div>
+
+    </div>
+
+    {% else %}
+
+    <div class="card available">
+
+        <h2>
+            🟢 AVAILABLE
+        </h2>
+
+        <h3>
+            Available Now
+        </h3>
+
+    </div>
+
+    {% endif %}
+
+    <div class="card next">
+
+        <h3>
+            Upcoming Meetings
+        </h3>
+
+        {% if next_meeting %}
+
+        <div class="meeting-item">
+
+            <p>
+                {{ next_meeting.subject }}
+            </p>
+
+            <span>
+                Starts:
+                {{ next_meeting.start }}
+            </span>
+
+        </div>
+
+        {% else %}
+
+        <p>
+            No upcoming meetings
+        </p>
+
+        {% endif %}
+
+    </div>
+
+    <div class="card time">
+
+        <h3>
+            Current Time
+        </h3>
+
+        <p id="clock"></p>
+
+    </div>
+
+    <script
+        src="{{ url_for('static', filename='app.js') }}"
+    ></script>
+
+</body>
+
+</html>
