@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>Book Meeting</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+<body>
+
+    <h1 class="title">
+
+        Book Conference Room
+
+    </h1>
+
+    <div class="card">
+
+        <form method="POST">
+
+            <input
+                type="text"
+                name="subject"
+                placeholder="Meeting Subject"
+                required
+            >
+
+            <br><br>
+
+            <input
+                type="email"
+                name="email"
+                placeholder="Organizer Email"
+                required
+            >
+<br><br>
+
+<input
+    type="text"
+    name="attendees"
+    placeholder="Required Attendees (comma separated)"
+>
+            <br><br>
+
+            <input
+                type="datetime-local"
+                name="start"
+                required
+            >
+
+            <br><br>
+
+            <input
+                type="datetime-local"
+                name="end"
+                required
+            >
+
+            <br><br>
+
+            <button
+                type="submit"
+                class="book-btn"
+            >
+
+                CREATE MEETING
+
+            </button>
+
+        </form>
+
+    </div>
+
+</body>
+
+</html>

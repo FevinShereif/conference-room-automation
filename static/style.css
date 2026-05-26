@@ -307,3 +307,55 @@ body {
 
     font-weight:bold;
 }
+
+.action-buttons {
+
+    text-align:center;
+
+    margin-bottom:30px;
+}
+
+.book-btn {
+
+    padding:18px 40px;
+
+    border:none;
+
+    border-radius:14px;
+
+    background:#2563eb;
+
+    color:white;
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:0.2s;
+}
+
+.book-btn:hover {
+
+    background:#1d4ed8;
+
+    transform:scale(1.05);
+}
+
+form input {
+
+    width:80%;
+
+    padding:18px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:#0f172a;
+
+    color:white;
+
+    font-size:18px;
+}
