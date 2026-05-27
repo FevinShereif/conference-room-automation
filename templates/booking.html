@@ -1,83 +1,116 @@
 <!DOCTYPE html>
-
-<html>
-
+<html lang="en">
 <head>
-
-    <title>Book Meeting</title>
-
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='style.css') }}"
-    >
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Book — {{ room_name }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a12;--surface:#0d1526;--surface2:#111d35;
+  --border:rgba(56,189,248,.18);--text:#e2e8f0;--muted:#64748b;
+  --accent:#38bdf8;--free:#22c55e;--busy:#ef4444;
+}
+body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;
+  display:flex;flex-direction:column;align-items:center;padding:40px 16px;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%,rgba(56,189,248,.09) 0%,transparent 60%),
+    repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(56,189,248,.03) 40px),
+    repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(56,189,248,.03) 40px);
+}
+.header-bar{width:100%;max-width:560px;display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;}
+.back-btn{display:flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:13px;transition:color .2s;}
+.back-btn:hover{color:var(--accent);}
+.page-title{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:var(--accent);letter-spacing:.06em;}
+.card{width:100%;max-width:560px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),#6366f1);}
+.card-heading{font-size:22px;font-weight:600;margin-bottom:4px;}
+.card-sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
+.form-group{margin-bottom:20px;}
+label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:7px;}
+input,textarea{width:100%;background:var(--surface2);border:1.5px solid rgba(255,255,255,.08);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;padding:12px 14px;transition:border-color .2s,box-shadow .2s;outline:none;}
+input:focus,textarea:focus{border-color:rgba(56,189,248,.5);box-shadow:0 0 0 3px rgba(56,189,248,.1);}
+input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(.6);}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.hint{font-size:11px;color:var(--muted);margin-top:5px;}
+.error-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:14px;color:#fca5a5;display:flex;align-items:flex-start;gap:10px;}
+.submit-btn{width:100%;background:linear-gradient(135deg,#1e6fa5,var(--accent));border:none;border-radius:12px;color:#fff;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700;padding:15px;cursor:pointer;letter-spacing:.03em;transition:opacity .2s,transform .1s;margin-top:8px;}
+.submit-btn:hover{opacity:.9;}
+.submit-btn:active{transform:scale(.98);}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+.divider{height:1px;background:rgba(255,255,255,.06);margin:24px 0;}
+.room-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);border-radius:8px;padding:6px 12px;font-size:13px;color:var(--accent);margin-bottom:20px;}
+</style>
 </head>
-
 <body>
+<div class="header-bar">
+  <a href="/" class="back-btn">← Back to Display</a>
+  <div class="page-title">📅 Book a Room</div>
+</div>
 
-    <h1 class="title">
+<div class="card">
+  <div class="room-tag">🏢 {{ room_name }}</div>
+  <div class="card-heading">New Booking</div>
+  <div class="card-sub">Fill in the details below. A PIN will be emailed to you after booking.</div>
+  <div class="divider"></div>
 
-        Book Conference Room
+  {% if error %}
+  <div class="error-box">
+    <span>⚠️</span>
+    <span>{{ error }}</span>
+  </div>
+  {% endif %}
 
-    </h1>
-
-    <div class="card">
-
-        <form method="POST">
-
-            <input
-                type="text"
-                name="subject"
-                placeholder="Meeting Subject"
-                required
-            >
-
-            <br><br>
-
-            <input
-                type="email"
-                name="email"
-                placeholder="Organizer Email"
-                required
-            >
-<br><br>
-
-<input
-    type="text"
-    name="attendees"
-    placeholder="Required Attendees (comma separated)"
->
-            <br><br>
-
-            <input
-                type="datetime-local"
-                name="start"
-                required
-            >
-
-            <br><br>
-
-            <input
-                type="datetime-local"
-                name="end"
-                required
-            >
-
-            <br><br>
-
-            <button
-                type="submit"
-                class="book-btn"
-            >
-
-                CREATE MEETING
-
-            </button>
-
-        </form>
-
+  <form method="POST" action="/book" id="bookForm">
+    <div class="form-group">
+      <label>Meeting Subject *</label>
+      <input type="text" name="subject" placeholder="e.g. Q2 Review, Client Call" required maxlength="120" value="{{ request.form.get('subject','') }}">
     </div>
 
-</body>
+    <div class="form-group">
+      <label>Your Email (Organiser) *</label>
+      <input type="email" name="email" placeholder="you@mahathiinfotech.com" required value="{{ request.form.get('email','') }}">
+      <div class="hint">Must be a @mahathiinfotech.com or @mahathiinfotech.in address</div>
+    </div>
 
+    <div class="row-2">
+      <div class="form-group">
+        <label>Start Time *</label>
+        <input type="datetime-local" name="start" required value="{{ request.form.get('start','') }}">
+      </div>
+      <div class="form-group">
+        <label>End Time *</label>
+        <input type="datetime-local" name="end" required value="{{ request.form.get('end','') }}">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Additional Attendees (optional)</label>
+      <input type="text" name="attendees" placeholder="colleague1@mahathiinfotech.com, colleague2@mahathiinfotech.com" value="{{ request.form.get('attendees','') }}">
+      <div class="hint">Comma-separated. Must be organisation email addresses. Teams invites will be sent to all.</div>
+    </div>
+
+    <button class="submit-btn" type="submit" id="submitBtn">📅 Book Conference Room</button>
+  </form>
+</div>
+
+<script>
+// Prevent double-submit and set minimum datetime to now
+const form = document.getElementById('bookForm');
+const btn  = document.getElementById('submitBtn');
+
+// Set min to now for datetime inputs
+const now = new Date();
+const pad = n => String(n).padStart(2,'0');
+const localNow = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+document.querySelectorAll('input[type="datetime-local"]').forEach(i => i.min = localNow);
+
+form.addEventListener('submit', () => {
+  btn.disabled = true;
+  btn.textContent = '⏳ Booking…';
+});
+</script>
+</body>
 </html>

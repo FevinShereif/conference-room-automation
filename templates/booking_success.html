@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="refresh" content="8;url=/">
+<title>Booking Confirmed — {{ room_name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:#060a12;color:#e2e8f0;font-family:'DM Sans',sans-serif;
+  display:flex;align-items:center;justify-content:center;padding:24px;
+  background-image:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(34,197,94,.1) 0%,transparent 60%);}
+.card{background:#0d1526;border:1px solid rgba(34,197,94,.3);border-radius:24px;padding:48px 40px;
+  max-width:480px;width:100%;text-align:center;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#22c55e,#4ade80);}
+.checkmark{font-size:72px;margin-bottom:20px;filter:drop-shadow(0 0 30px rgba(34,197,94,.6));animation:pop .5s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+h1{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:#22c55e;margin-bottom:8px;letter-spacing:.05em;}
+.sub{font-size:14px;color:#64748b;margin-bottom:32px;}
+.detail-box{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:24px;margin-bottom:24px;text-align:left;}
+.detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);gap:12px;}
+.detail-row:last-child{border-bottom:none;}
+.dl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;flex-shrink:0;}
+.dv{font-size:14px;color:#e2e8f0;font-weight:500;text-align:right;}
+.pin-box{background:rgba(56,189,248,.07);border:2px solid rgba(56,189,248,.3);border-radius:14px;padding:24px;margin-bottom:24px;}
+.pin-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#64748b;margin-bottom:12px;}
+.pin-code{font-family:'Orbitron',monospace;font-size:48px;font-weight:900;letter-spacing:14px;color:#38bdf8;
+  text-shadow:0 0 30px rgba(56,189,248,.5);}
+.pin-note{font-size:12px;color:#64748b;margin-top:10px;}
+.actions{display:flex;gap:12px;justify-content:center;margin-top:8px;}
+.btn{padding:12px 24px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;transition:opacity .2s;}
+.btn-primary{background:linear-gradient(135deg,#1e6fa5,#38bdf8);color:#fff;border:none;}
+.btn-outline{background:transparent;border:1px solid rgba(255,255,255,.15);color:#94a3b8;}
+.btn:hover{opacity:.85;}
+.redirect-note{font-size:12px;color:#475569;margin-top:20px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="checkmark">✅</div>
+  <h1>Booking Confirmed</h1>
+  <div class="sub">Your meeting has been created in Outlook & Teams</div>
+
+  <div class="detail-box">
+    <div class="detail-row"><span class="dl">Room</span><span class="dv">{{ room_name }}</span></div>
+    <div class="detail-row"><span class="dl">Subject</span><span class="dv">{{ subject }}</span></div>
+    <div class="detail-row"><span class="dl">Organiser</span><span class="dv">{{ organizer }}</span></div>
+    <div class="detail-row"><span class="dl">Start</span><span class="dv">{{ start }}</span></div>
+    <div class="detail-row"><span class="dl">End</span><span class="dv">{{ end }}</span></div>
+  </div>
+
+  <div class="pin-box">
+    <div class="pin-label">Your Room Access PIN</div>
+    <div class="pin-code">{{ pin_code }}</div>
+    <div class="pin-note">This PIN has also been sent to your email. Enter it on the room display to confirm access.</div>
+  </div>
+
+  <div class="actions">
+    <a href="/" class="btn btn-primary">View Room Display</a>
+    <a href="/book" class="btn btn-outline">Book Another</a>
+  </div>
+
+  <div class="redirect-note">Returning to display in 8 seconds…</div>
+</div>
+</body>
+</html>

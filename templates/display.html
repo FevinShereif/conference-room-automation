@@ -1,194 +1,313 @@
 <!DOCTYPE html>
-
-<html>
-
+<html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>{{ room_name }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a12;--surface:#0d1526;--border:rgba(56,189,248,.15);
+  --text:#e2e8f0;--muted:#64748b;--accent:#38bdf8;
+  --free:#22c55e;--busy:#ef4444;--warn:#f59e0b;
+  --font-d:'Orbitron',monospace;--font-b:'DM Sans',sans-serif;--r:16px;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:var(--font-b);-webkit-font-smoothing:antialiased;touch-action:none;user-select:none;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%,rgba(56,189,248,.08) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%,rgba(99,102,241,.07) 0%,transparent 60%),
+    repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(56,189,248,.03) 39px,rgba(56,189,248,.03) 40px),
+    repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(56,189,248,.03) 39px,rgba(56,189,248,.03) 40px);}
+#app{position:relative;z-index:1;display:flex;flex-direction:column;width:100vw;height:100vh;padding:20px 24px 16px;gap:16px;}
 
-    <title>Conference Room</title>
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.room-id{display:flex;align-items:center;gap:12px;}
+.room-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),#6366f1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 20px rgba(56,189,248,.3);}
+.room-name{font-family:var(--font-d);font-size:clamp(14px,2.2vw,22px);font-weight:700;letter-spacing:.06em;color:var(--accent);}
+.room-meta{font-size:12px;color:var(--muted);margin-top:2px;letter-spacing:.04em;}
+.header-right{display:flex;align-items:center;gap:20px;}
+.book-btn{display:flex;align-items:center;gap:6px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);border-radius:10px;color:var(--accent);font-family:var(--font-b);font-size:13px;font-weight:600;padding:8px 16px;cursor:pointer;text-decoration:none;transition:background .2s;}
+.book-btn:hover{background:rgba(56,189,248,.22);}
+#clock{font-family:var(--font-d);font-size:clamp(20px,4vw,38px);font-weight:900;letter-spacing:.08em;color:var(--text);text-shadow:0 0 30px rgba(56,189,248,.4);}
+#date-display{font-size:12px;color:var(--muted);text-align:right;margin-top:2px;letter-spacing:.05em;text-transform:uppercase;}
 
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='style.css') }}"
-    >
+/* Status bar */
+.status-bar{height:4px;border-radius:2px;background:var(--surface);overflow:hidden;flex-shrink:0;}
+.status-bar-fill{height:100%;border-radius:2px;transition:background .6s,width 1s;position:relative;overflow:hidden;}
+.status-bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:shimmer 2s infinite;}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
 
+/* Main grid */
+.main-area{display:grid;grid-template-columns:1fr 320px;gap:16px;flex:1;min-height:0;}
+
+/* Status card */
+.status-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px 32px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;transition:border-color .6s;}
+.status-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(56,189,248,.05) 0%,transparent 70%);pointer-events:none;}
+.status-card.busy{border-color:rgba(239,68,68,.4);}
+.status-card.busy::before{background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(239,68,68,.06) 0%,transparent 70%);}
+.status-card.free{border-color:rgba(34,197,94,.3);}
+.status-card.free::before{background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(34,197,94,.06) 0%,transparent 70%);}
+
+.status-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:100px;font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px;width:fit-content;}
+.status-badge.busy{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;}
+.status-badge.free{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);color:#86efac;}
+.status-dot{width:8px;height:8px;border-radius:50%;animation:pdot 1.8s ease-in-out infinite;}
+.busy .status-dot{background:var(--busy);box-shadow:0 0 8px var(--busy);}
+.free .status-dot{background:var(--free);box-shadow:0 0 8px var(--free);}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+
+.meeting-subject{font-family:var(--font-d);font-size:clamp(18px,3.5vw,34px);font-weight:700;line-height:1.2;margin-bottom:12px;letter-spacing:.02em;}
+.meeting-meta{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:20px;}
+.meta-chip{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);}
+.meta-chip strong{color:var(--text);}
+.meeting-progress{height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:20px;overflow:hidden;}
+.meeting-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#6366f1);border-radius:2px;transition:width .5s;}
+.meeting-progress-label{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--muted);}
+.free-state{text-align:center;padding:20px;}
+.free-icon{font-size:64px;margin-bottom:16px;filter:drop-shadow(0 0 20px rgba(34,197,94,.5));}
+.free-title{font-family:var(--font-d);font-size:clamp(24px,5vw,48px);font-weight:900;color:var(--free);letter-spacing:.05em;text-shadow:0 0 40px rgba(34,197,94,.4);}
+.free-sub{font-size:14px;color:var(--muted);margin-top:8px;}
+
+/* Right col */
+.right-col{display:flex;flex-direction:column;gap:14px;}
+.pin-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;flex-shrink:0;}
+.panel-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:14px;}
+.pin-display{display:flex;gap:6px;justify-content:center;margin-bottom:14px;}
+.pin-digit{width:36px;height:44px;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.08);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--accent);transition:all .2s;}
+.pin-digit.filled{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.5);box-shadow:0 0 12px rgba(56,189,248,.2);}
+.pin-digit.success{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.6);color:var(--free);}
+.pin-digit.error{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.5);color:var(--busy);animation:shake .3s ease;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.num-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;color:var(--text);font-family:var(--font-d);font-size:16px;font-weight:700;padding:14px 0;cursor:pointer;transition:background .15s,transform .1s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.num-btn:active,.num-btn.pressed{background:rgba(56,189,248,.18);border-color:rgba(56,189,248,.5);transform:scale(.93);}
+.num-btn.del{font-size:18px;color:var(--muted);}
+.pin-message{text-align:center;font-size:12px;margin-top:10px;min-height:18px;color:var(--muted);transition:color .3s;}
+.pin-message.ok{color:var(--free);}
+.pin-message.err{color:var(--busy);}
+
+/* Upcoming */
+.upcoming-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;flex:1;min-height:0;overflow:hidden;}
+.upcoming-list{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
+.upcoming-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:rgba(0,0,0,.3);border-radius:10px;border-left:3px solid var(--accent);animation:slidein .4s ease both;}
+@keyframes slidein{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+.upcoming-time{font-family:var(--font-d);font-size:11px;color:var(--accent);white-space:nowrap;min-width:56px;}
+.upcoming-details{flex:1;min-width:0;}
+.upcoming-subject{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.upcoming-org{font-size:11px;color:var(--muted);margin-top:1px;}
+.no-upcoming{font-size:13px;color:var(--muted);text-align:center;margin-top:12px;}
+
+/* Footer */
+footer{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.footer-brand{font-size:11px;color:rgba(100,116,139,.5);letter-spacing:.06em;}
+.sync-indicator{display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(100,116,139,.5);}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--free);animation:pdot 3s ease-in-out infinite;}
+
+/* Toast */
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 24px;font-size:14px;font-weight:500;box-shadow:0 8px 40px rgba(0,0,0,.5);z-index:999;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .35s;opacity:0;white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+@media(max-width:768px){
+  #app{padding:14px 16px 12px;gap:12px;}
+  .main-area{grid-template-columns:1fr;grid-template-rows:auto auto;}
+  .right-col{flex-direction:row;flex-wrap:wrap;}
+  .pin-panel{flex:1;min-width:240px;}
+  .upcoming-panel{flex:1;min-width:200px;}
+}
+</style>
 </head>
-
 <body>
+<div id="app">
+  <header>
+    <div class="room-id">
+      <div class="room-icon">🏢</div>
+      <div>
+        <div class="room-name">{{ room_name }}</div>
+        <div class="room-meta">Capacity: {{ room_capacity }} seats</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <a href="/book" class="book-btn">📅 Book Room</a>
+      <div>
+        <div id="clock">--:-- --</div>
+        <div id="date-display">Loading…</div>
+      </div>
+    </div>
+  </header>
 
-    <div class="top-bar">
+  <div class="status-bar">
+    <div class="status-bar-fill" id="status-bar-fill" style="width:0%;background:var(--muted);"></div>
+  </div>
 
-        <div class="room-title-small">
-            Enterprise Room Panel
+  <div class="main-area">
+    <div class="status-card free" id="status-card">
+      <div id="busy-state" style="display:none;">
+        <div class="status-badge busy"><div class="status-dot"></div> In Use</div>
+        <div class="meeting-subject" id="m-subject">—</div>
+        <div class="meeting-meta">
+          <div class="meta-chip">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span id="m-organizer">—</span>
+          </div>
+          <div class="meta-chip">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <strong id="m-time">—</strong>
+          </div>
         </div>
-
-        <div class="sync-status">
-
-            <span class="sync-dot"></span>
-
-            LIVE
-
+        <div class="meeting-progress"><div class="meeting-progress-fill" id="m-progress" style="width:0%"></div></div>
+        <div class="meeting-progress-label">
+          <span id="m-start">—</span><span id="m-elapsed">—</span><span id="m-end">—</span>
         </div>
-
+      </div>
+      <div id="free-state" class="free-state">
+        <div class="free-icon">🟢</div>
+        <div class="free-title">AVAILABLE</div>
+        <div class="free-sub" id="free-sub-text">Ready for use</div>
+      </div>
     </div>
 
-    <h1 class="title">
-        Conference Room 1
-    </h1>
-
-    <div class="action-buttons">
-
-    <a href="/book">
-
-        <button class="book-btn">
-
-            BOOK MEETING
-
-        </button>
-
-    </a>
-
-</div>
-    {% if current_meeting %}
-
-    <div class="card reserved">
-
-        <h2>
-            🔴 RESERVED
-        </h2>
-
-        <h1>
-            {{ current_meeting.subject }}
-        </h1>
-
-        <p>
-            Organizer:
-            {{ current_meeting.organizer }}
-        </p>
-
-        <p id="meeting-time">
-
-            {{ current_meeting.start }}
-            -
-            {{ current_meeting.end }}
-
-        </p>
-
-        <div class="countdown">
-
-            Meeting In Progress
-
+    <div class="right-col">
+      <div class="pin-panel">
+        <div class="panel-title">🔐 Enter Meeting PIN</div>
+        <div class="pin-display" id="pin-display">
+          <div class="pin-digit" data-i="0">_</div>
+          <div class="pin-digit" data-i="1">_</div>
+          <div class="pin-digit" data-i="2">_</div>
+          <div class="pin-digit" data-i="3">_</div>
+          <div class="pin-digit" data-i="4">_</div>
+          <div class="pin-digit" data-i="5">_</div>
         </div>
-
-        <div class="progress-container">
-
-            <div class="progress-bar"></div>
-
+        <div class="numpad">
+          <button class="num-btn" data-v="1">1</button><button class="num-btn" data-v="2">2</button><button class="num-btn" data-v="3">3</button>
+          <button class="num-btn" data-v="4">4</button><button class="num-btn" data-v="5">5</button><button class="num-btn" data-v="6">6</button>
+          <button class="num-btn" data-v="7">7</button><button class="num-btn" data-v="8">8</button><button class="num-btn" data-v="9">9</button>
+          <button class="num-btn del" data-v="clear">✕</button><button class="num-btn" data-v="0">0</button><button class="num-btn del" data-v="del">⌫</button>
         </div>
-
- <div class="pin-box">
-
-    <div class="pin-title">
-
-        Enter Meeting PIN
-
+        <div class="pin-message" id="pin-msg">Enter your 6-digit PIN</div>
+      </div>
+      <div class="upcoming-panel">
+        <div class="panel-title">📅 Coming Up</div>
+        <div class="upcoming-list" id="upcoming-list"><div class="no-upcoming">Loading…</div></div>
+      </div>
     </div>
+  </div>
 
-    <input
-        type="password"
-        id="pin-input"
-        readonly
-        placeholder="••••••"
-    >
-
-    <div class="keypad">
-
-        <button onclick="addPin('1')">1</button>
-        <button onclick="addPin('2')">2</button>
-        <button onclick="addPin('3')">3</button>
-
-        <button onclick="addPin('4')">4</button>
-        <button onclick="addPin('5')">5</button>
-        <button onclick="addPin('6')">6</button>
-
-        <button onclick="addPin('7')">7</button>
-        <button onclick="addPin('8')">8</button>
-        <button onclick="addPin('9')">9</button>
-
-        <button onclick="clearPin()">C</button>
-
-        <button onclick="addPin('0')">0</button>
-
-        <button onclick="verifyPin()">✓</button>
-
-    </div>
-
-    <div id="pin-message"></div>
-
+  <footer>
+    <div class="footer-brand">{{ room_name }} Display · v2.0</div>
+    <div class="sync-indicator"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Syncing…</span></div>
+  </footer>
 </div>
 
-    </div>
+<div id="toast"></div>
 
-    {% else %}
-
-    <div class="card available">
-
-        <h2>
-            🟢 AVAILABLE
-        </h2>
-
-        <h3>
-            Available Now
-        </h3>
-
-    </div>
-
-    {% endif %}
-
-    <div class="card next">
-
-        <h3>
-            Upcoming Meetings
-        </h3>
-
-        {% if next_meeting %}
-
-        <div class="meeting-item">
-
-            <p>
-                {{ next_meeting.subject }}
-            </p>
-
-            <span>
-                Starts:
-                {{ next_meeting.start }}
-            </span>
-
-        </div>
-
-        {% else %}
-
-        <p>
-            No upcoming meetings
-        </p>
-
-        {% endif %}
-
-    </div>
-
-    <div class="card time">
-
-        <h3>
-            Current Time
-        </h3>
-
-        <p id="clock"></p>
-
-    </div>
-
-    <script
-        src="{{ url_for('static', filename='app.js') }}"
-    ></script>
-
+<script>
+let pinBuffer="", currentData=null;
+function tick(){
+  const n=new Date(),h=n.getHours(),m=String(n.getMinutes()).padStart(2,'0'),
+        ap=h>=12?'PM':'AM',h12=String(h%12||12).padStart(2,'0');
+  document.getElementById('clock').textContent=`${h12}:${m} ${ap}`;
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+        months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('date-display').textContent=
+    `${days[n.getDay()]}, ${n.getDate()} ${months[n.getMonth()]} ${n.getFullYear()}`;
+  if(currentData&&currentData.current) updateProgress(currentData.current,n);
+}
+setInterval(tick,1000);tick();
+function updateProgress(m,now){
+  const s=new Date(m.start_iso+(m.start_iso.endsWith('Z')?'':'Z')),
+        e=new Date(m.end_iso+(m.end_iso.endsWith('Z')?'':'Z')),
+        pct=Math.min(100,Math.max(0,(now-s)/(e-s)*100)),
+        rem=Math.max(0,Math.round((e-now)/60000));
+  document.getElementById('m-progress').style.width=pct.toFixed(1)+'%';
+  document.getElementById('m-elapsed').textContent=rem>0?`${rem} min left`:'Ending soon';
+}
+async function fetchStatus(){
+  try{
+    const d=await(await fetch('/api/status')).json();
+    currentData=d;render(d);setSyncState(true);
+  }catch(e){setSyncState(false);}
+  setTimeout(fetchStatus,30000);
+}
+function render(data){
+  const card=document.getElementById('status-card'),
+        busy=document.getElementById('busy-state'),
+        free=document.getElementById('free-state'),
+        bar=document.getElementById('status-bar-fill'),
+        c=data.current;
+  if(c){
+    card.className='status-card busy';busy.style.display='';free.style.display='none';
+    document.getElementById('m-subject').textContent=c.subject;
+    document.getElementById('m-organizer').textContent=c.organizer;
+    document.getElementById('m-time').textContent=`${c.start} – ${c.end}`;
+    document.getElementById('m-start').textContent=c.start;
+    document.getElementById('m-end').textContent=c.end;
+    bar.style.background='linear-gradient(90deg,#ef4444,#f87171)';bar.style.width='100%';
+  }else{
+    card.className='status-card free';busy.style.display='none';free.style.display='';
+    const nx=data.upcoming&&data.upcoming[0];
+    document.getElementById('free-sub-text').textContent=
+      nx?`Next meeting at ${nx.start}`:'No upcoming meetings today';
+    bar.style.background='linear-gradient(90deg,#22c55e,#4ade80)';bar.style.width='30%';
+  }
+  const list=document.getElementById('upcoming-list');
+  if(!data.upcoming||!data.upcoming.length){list.innerHTML='<div class="no-upcoming">No upcoming meetings</div>';}
+  else{list.innerHTML=data.upcoming.map((u,i)=>`
+    <div class="upcoming-item" style="animation-delay:${i*80}ms;">
+      <div class="upcoming-time">${u.start}</div>
+      <div class="upcoming-details">
+        <div class="upcoming-subject">${esc(u.subject)}</div>
+        <div class="upcoming-org">${esc(u.organizer)}</div>
+      </div>
+    </div>`).join('');}
+}
+document.querySelectorAll('.num-btn').forEach(b=>{
+  ['touchstart','click'].forEach(ev=>b.addEventListener(ev,e=>{
+    e.preventDefault();b.classList.add('pressed');
+    setTimeout(()=>b.classList.remove('pressed'),180);
+    handlePin(b.dataset.v);
+  },{passive:false}));
+});
+function handlePin(v){
+  if(v==='clear'){pinBuffer='';}
+  else if(v==='del'){pinBuffer=pinBuffer.slice(0,-1);}
+  else if(pinBuffer.length<6){pinBuffer+=v;}
+  renderDigits();
+  if(pinBuffer.length===6)setTimeout(submitPin,200);
+}
+function renderDigits(state){
+  document.querySelectorAll('.pin-digit').forEach((el,i)=>{
+    el.className='pin-digit'+(state?' '+state:(i<pinBuffer.length?' filled':''));
+    el.textContent=i<pinBuffer.length?pinBuffer[i]:'_';
+  });
+}
+async function submitPin(){
+  const pin=pinBuffer;
+  try{
+    const d=await(await fetch('/api/verify_pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})})).json();
+    if(d.ok){renderDigits('success');setMsg('✓ Access Granted — '+d.subject,'ok');showToast(`✅ Welcome! ${d.subject} · ${d.start}–${d.end}`);}
+    else{renderDigits('error');setMsg('✗ '+(d.message||'Invalid PIN'),'err');showToast('❌ '+(d.message||'Invalid PIN'));}
+    pinBuffer='';setTimeout(()=>{renderDigits();setMsg('Enter your 6-digit PIN');},2800);
+  }catch(e){setMsg('Connection error','err');pinBuffer='';renderDigits();}
+}
+function setMsg(t,c){const e=document.getElementById('pin-msg');e.textContent=t;e.className='pin-message '+(c||'');}
+let tt;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3500);}
+function setSyncState(ok){
+  document.getElementById('sync-dot').style.background=ok?'var(--free)':'var(--warn)';
+  document.getElementById('sync-label').textContent=ok?'Live':'Reconnecting…';
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('selectstart',e=>e.preventDefault());
+fetchStatus();
+</script>
 </body>
-
 </html>

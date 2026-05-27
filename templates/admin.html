@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin — {{ room_name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#060a12;color:#e2e8f0;font-family:'DM Sans',sans-serif;padding:32px;min-height:100vh;}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+h1{font-family:'Orbitron',monospace;color:#38bdf8;font-size:20px;}
+.back{color:#64748b;font-size:13px;text-decoration:none;}
+.back:hover{color:#38bdf8;}
+.stats{display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap;}
+.stat{background:#0d1526;border:1px solid rgba(56,189,248,.15);border-radius:12px;padding:16px 20px;min-width:120px;}
+.stat-n{font-family:'Orbitron',monospace;font-size:28px;font-weight:700;color:#38bdf8;}
+.stat-l{font-size:12px;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.08em;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:10px 14px;background:#0d1526;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.08em;}
+td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);}
+tr:hover td{background:rgba(56,189,248,.04);}
+.badge{padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;}
+.r{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);}
+.c{background:rgba(100,116,139,.15);color:#94a3b8;border:1px solid rgba(100,116,139,.3);}
+.m{background:rgba(56,189,248,.12);color:#7dd3fc;border:1px solid rgba(56,189,248,.25);}
+.pin{font-family:'Orbitron',monospace;font-size:13px;letter-spacing:.1em;color:#facc15;}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>{{ room_name }} — Admin</h1>
+  <a href="/" class="back">← Back to display</a>
+</div>
+
+{% set reserved = meetings | selectattr(6, 'equalto', 'RESERVED') | list %}
+{% set manual   = meetings | selectattr(6, 'equalto', 'MANUAL')   | list %}
+{% set cancelled= meetings | selectattr(6, 'equalto', 'CANCELLED') | list %}
+
+<div class="stats">
+  <div class="stat"><div class="stat-n">{{ meetings|length }}</div><div class="stat-l">Total</div></div>
+  <div class="stat"><div class="stat-n" style="color:#fca5a5;">{{ reserved|length }}</div><div class="stat-l">Reserved</div></div>
+  <div class="stat"><div class="stat-n" style="color:#7dd3fc;">{{ manual|length }}</div><div class="stat-l">Manual Bookings</div></div>
+  <div class="stat"><div class="stat-n" style="color:#94a3b8;">{{ cancelled|length }}</div><div class="stat-l">Cancelled</div></div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Subject</th><th>Organiser</th><th>Email</th>
+      <th>Start</th><th>End</th><th>PIN</th><th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in meetings %}
+    <tr>
+      <td>{{ m[0] }}</td>
+      <td>{{ m[1] }}</td>
+      <td>{{ m[2] }}</td>
+      <td>{{ m[3] }}</td>
+      <td>{{ m[4] }}</td>
+      <td><span class="pin">{{ m[5] }}</span></td>
+      <td>
+        <span class="badge {% if m[6]=='RESERVED' %}r{% elif m[6]=='MANUAL' %}m{% else %}c{% endif %}">
+          {{ m[6] or '—' }}
+        </span>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</body>
+</html>
